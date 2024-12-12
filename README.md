@@ -2,51 +2,36 @@
 ## Dynamic Head for Object Detection
 
 Dynamic Head: Unifying Object Detection Heads with Attentions  [Paper](https://arxiv.org/pdf/2106.08322)
- 
- ### Summary 
+This is not official implmenetaito but prpbably easier to read and easier to follow workflow more closely related to workflow described in paper. See our summary of paper here 
+[Summary](https://github.com/Asad-Ismail/Paper-Summaries/tree/main/ImageOD)
 
-It coherently combining multiple self-attention mechanisms between feature levels for scaleawareness, among spatial locations for spatial-awareness, and within output channels for task-awareness, the proposed approach significantly improves the representation ability of object detection heads without any computational
-overhead. 
-Consider output of a backbone network,ca 3-dimensional tensor with dimensions: level, space, and channel. One solution proposed is to implement a full self-attention mechanism over this tensor which will be very computational expensive O(LXCxS)^2 for full attention main idea is to have sperate self-attention for each dimension thus significantly reducing the computation cost compard to full attention.
+## Installation
 
+```bash
+git clone https://github.com/yourusername/dynamichead.git
+cd dynamichead
+pip install -e .
+```
 
-### Architecture
+## Usage
 
-<p align="center">
-    <img src="imgs/dyanamichead.png" alt="Dynamic head Architecture" width="800" height="200">
-</p>
+```python
+## Set up input input is dict of feature level key:tensor
+batch_size = 2
+features = {
+    'p3': torch.randn(batch_size, 256, 64, 64),
+    'p4': torch.randn(batch_size, 512, 32, 32),
+    'p5': torch.randn(batch_size, 1024, 16, 16)
+}
+# Channel configuration
+in_channels_dict = {k:v.shape[1] for k,v in features.items()}
 
-Details of dynamic head pipeline
+## We need to have same output channels for all levels. OD mostly have that but to make sure 
+out_channels = 256
 
-<p align="center">
-    <img src="imgs/dynamichead_pipeline.png" alt="Dynamic head Architecture" width="800" height="200">
-</p>
+## Create Dynamic head class
+dynamic_head = DynamicHead(in_channels_dict, out_channels)
 
-### Equations to Implement
-
-We are implementing this main equation for the paper
-<p align="center">
-    <img src="imgs/complete_eq.png" alt="Dynamic head Architecture" width="400" height="100">
-</p>
-
-where 
-
-**Scale Attention (πL)** :
-
-<p align="center">
-    <img src="imgs/scale_eq.png" alt="Dynamic head Architecture" width="300" height="150">
-</p>
-
-
-**Spatial Attention (πS)** :
-
-<p align="center">
-    <img src="imgs/scale_eq.png" alt="Dynamic head Architecture" width="300" height="150">
-</p>
-
-
-**Task Attention (πS)** :
-
-<p align="center">
-    <img src="imgs/task_eq.png" alt="Dynamic head Architecture" width="300" height="150">
-</p>
+# Process features outputs is a dict with tensor of same shape as input dict
+outputs = dynamic_head(features)
+```
