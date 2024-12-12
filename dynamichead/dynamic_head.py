@@ -46,7 +46,7 @@ class MultiLevelFusion(nn.Module):
     """
     Handles multi-level feature fusion with channel alignment, upsampling and downsampling
     """
-    def __init__(self, conv_func, out_channels: int,in_channels: Dict[str, int]=None):
+    def __init__(self, conv_func, out_channels: int,in_channels_dict: Dict[str, int]=None):
         """
         Args:
             conv_func: Convolution function to use for convolution e.g normal or deformable
@@ -57,7 +57,7 @@ class MultiLevelFusion(nn.Module):
         super().__init__()
         
         # Channel mapping convolutions for each level
-        if in_channels:
+        if in_channels_dict:
             self.channel_maps = nn.ModuleDict({
                 name: nn.Conv2d(in_ch, out_channels, 1) 
                 for name, in_ch in in_channels_dict.items()
@@ -250,7 +250,7 @@ class DynamicHead(nn.Module):
         self.fusion = MultiLevelFusion(
             Conv, 
             out_channels=out_channels, 
-            in_channels=in_channels_dict
+            in_channels_dict=in_channels_dict
         )
         self.scale_attention = ScaleAwareAttention(out_channels)
         self.spatial_attention = SpatialAwareAttention(channels=out_channels, kernel_sz=3)
