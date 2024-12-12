@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.ops import deform_conv2d
-import timm
 from typing import Dict, List
 
 
