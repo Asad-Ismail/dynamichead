@@ -144,6 +144,16 @@ class ScaleAwareAttention(nn.Module):
             nn.ReLU(inplace=True)
         )
 
+        # Official initlization
+        self.init_weights() 
+    
+    def init_weights(self):
+        for m in self.AttnConv.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.normal_(m.weight.data, 0, 0.01)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+
     def h_sigmoid(self, x):
         return torch.clamp((x + 1) / 2, 0, 1)
         
@@ -157,9 +167,9 @@ class ScaleAwareAttention(nn.Module):
             attn_fea = []
             res_fea = []
             for fea in features:
+                #features [ B, C, H, W]
                 res_fea.append(fea)
                 attn_fea.append(self.AttnConv(fea))
-            # stacked features [num_levels, B, C, H, W]
             stacked_feats = torch.stack(res_fea)
             # attention weights [num_levels, B, 1, 1]
             attn = self.h_sigmoid(torch.stack(attn_fea))
@@ -177,6 +187,14 @@ class SpatialAwareAttention(nn.Module):
         ## offests for deformable cons are k*k*2(x+y offers) + masks (k*k)
         out_offs=kernel_sz*kernel_sz*2+kernel_sz*kernel_sz
         self.offset = nn.Conv2d(channels,out_offs , 3, padding=1) 
+        self.init_weights()
+    
+    def init_weights(self):
+        # Initialization from official implementation
+        nn.init.normal_(self.offset.weight.data, 0, 0.01)
+        if self.offset.bias is not None:
+            self.offset.bias.data.zero_()
+        nn.init.normal_(self.deform_conv.weight.data, 0, 0.01)
         
     def forward(self, features_dict):
         outputs = {}
@@ -192,6 +210,7 @@ class SpatialAwareAttention(nn.Module):
             mask = offset_mask[:, 18:].sigmoid()
             conv_args = {"offset": offset, "mask": mask}
             # Collect features from different levels
+            #sp_feat [L,B,C,H,W]
             sp_feat = [self.deform_conv(feature, **conv_args) for feature in features ]
             # Aggregate features using mean along level
             outputs[name] = torch.stack(sp_feat).mean(dim=0)
@@ -260,9 +279,7 @@ class DynamicHead(nn.Module):
         output = {}
         
         # Process through Dynamic head pipeline
-        # fusion model is used to align the channels of different levels and reduce them to a common size. This is not a seperately mentioned in the paper
-        # paper but the line "learned from the input feature from the median level of FPN"
-        # in the paper suggests that the channels are aligned and reduced to a common size.
+        # fusion model is used to align the channels of different levels and reduce them to a common size spatially and align output channels.
         x = self.fusion(features)          
         x = self.scale_attention(x)       
         x = self.spatial_attention(x)      
