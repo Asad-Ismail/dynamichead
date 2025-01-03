@@ -2,6 +2,7 @@
 ## Dynamic Head for Object Detection
 
 Dynamic Head: Unifying Object Detection Heads with Attentions  [Paper](https://arxiv.org/pdf/2106.08322)
+
 This is not official implmenetaito but prpbably easier to read and easier to follow workflow more closely related to workflow described in paper. See our summary of paper here 
 
 [Summary](https://github.com/Asad-Ismail/Paper-Summaries/tree/main/ImageOD)
